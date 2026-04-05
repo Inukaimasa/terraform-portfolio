@@ -1,17 +1,19 @@
-output "project_name" {
-  description = "プロジェクト名"
-  value       = var.project_name
-}
+# output "project_name" {
+#   description = "プロジェクト名"
+#   value       = var.project_name
+# }
 
-output "environment" {
-  description = "環境名"
-  value       = var.environment
-}
+# output "environment" {
+#   description = "環境名"
+#   value       = var.environment
+# }
 
-output "aws_region" {
-  description = "AWSリージョン"
-  value       = var.aws_bucket_region
-}
+# output "aws_region" {
+#   description = "AWSリージョン"
+#   value       = var.aws_region
+# }
+
+
 output "s3_bucket_name" {
   description = "S3バケット名"
   value       = aws_s3_bucket.this.bucket
