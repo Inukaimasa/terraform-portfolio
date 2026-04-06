@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>リンク管理</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #f3f4f6 0%, #ffffff 100%);
+      color: #222;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 20px 64px;
+    }
+
+    .header {
+      margin-bottom: 28px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .header p {
+      margin: 0;
+      color: #6b7280;
+      line-height: 1.7;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 28px 24px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      font-size: 14px;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f9fafb;
+      color: #374151;
+    }
+
+    input[type="text"],
+    input[type="url"],
+    input[type="number"],
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #111827;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .button {
+      display: inline-block;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .button-primary {
+      background: #111827;
+      color: #ffffff;
+    }
+
+    .button-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .button:hover {
+      opacity: 0.92;
+    }
+
+    .status-active {
+      color: #166534;
+      font-weight: bold;
+    }
+
+    .status-inactive {
+      color: #b91c1c;
+      font-weight: bold;
+    }
+
+    .sub-links {
+      margin-top: 24px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .sub-links a {
+      color: #374151;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .sub-links a:hover {
+      text-decoration: underline;
+    }
+
+    .note {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.7;
+    }
+
+    .success-message {
+      margin-top: 16px;
+      color: #166534;
+      font-size: 13px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>リンク管理</h1>
+      <p>
+        公開プロフィールに表示するリンクを管理します。
+        現在は見た目確認用の仮画面です。
+      </p>
+    </header>
+
+    <section class="card">
+      <h2>登録済みリンク</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>リンク名</th>
+              <th>URL</th>
+              <th>表示順</th>
+              <th>状態</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Instagram</td>
+              <td>https://instagram.com/inukai</td>
+              <td>1</td>
+              <td><span class="status-active">有効</span></td>
+            </tr>
+            <tr>
+              <td>X</td>
+              <td>https://x.com/inukai</td>
+              <td>2</td>
+              <td><span class="status-active">有効</span></td>
+            </tr>
+            <tr>
+              <td>YouTube</td>
+              <td>https://youtube.com/</td>
+              <td>3</td>
+              <td><span class="status-active">有効</span></td>
+            </tr>
+            <tr>
+              <td>作品販売ページ</td>
+              <td>https://example.com/shop</td>
+              <td>4</td>
+              <td><span class="status-inactive">無効</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>リンク追加 / 編集</h2>
+
+      <form id="linkForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="linkName">リンク名</label>
+            <input
+              type="text"
+              id="linkName"
+              name="linkName"
+              placeholder="Instagram"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="linkUrl">URL</label>
+            <input
+              type="url"
+              id="linkUrl"
+              name="linkUrl"
+              placeholder="https://example.com"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="sortOrder">表示順</label>
+            <input
+              type="number"
+              id="sortOrder"
+              name="sortOrder"
+              min="1"
+              placeholder="1"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="status">状態</label>
+            <select id="status" name="status" required>
+              <option value="active">有効</option>
+              <option value="inactive">無効</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button type="submit" class="button button-primary">保存する</button>
+          <a class="button button-secondary" href="./admin.html">管理トップへ戻る</a>
+        </div>
+
+        <p id="successMessage" class="success-message">
+          保存しました（仮表示）。
+        </p>
+      </form>
+    </section>
+
+    <div class="sub-links">
+      <a href="./admin-profile.html">プロフィール編集へ</a>
+      <a href="./admin-analytics.html">アクセス集計へ</a>
+      <a href="./profile.html">公開プロフィールを見る</a>
+    </div>
+
+    <p class="note">
+      ※ Phase1 ではまず画面構成を固め、後続で API Gateway / Lambda / DynamoDB と接続します。
+    </p>
+  </div>
+
+  <script>
+    const linkForm = document.getElementById("linkForm");
+    const successMessage = document.getElementById("successMessage");
+
+    linkForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      successMessage.style.display = "block";
+    });
+  </script>
+</body>
+</html>

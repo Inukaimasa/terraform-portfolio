@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理トップ</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #f3f4f6 0%, #ffffff 100%);
+      color: #222;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 20px 64px;
+    }
+
+    .header {
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .header p {
+      margin: 0;
+      color: #6b7280;
+      line-height: 1.7;
+    }
+
+    .summary-card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+      margin-bottom: 28px;
+    }
+
+    .summary-title {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .summary-text {
+      margin: 0;
+      color: #4b5563;
+      line-height: 1.7;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .menu-card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+    }
+
+    .menu-card h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    .menu-card p {
+      margin: 0 0 18px;
+      color: #6b7280;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .menu-link {
+      display: inline-block;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #111827;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.2s ease;
+    }
+
+    .menu-link:hover {
+      opacity: 0.92;
+    }
+
+    .sub-links {
+      margin-top: 28px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .sub-links a {
+      color: #374151;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .sub-links a:hover {
+      text-decoration: underline;
+    }
+
+    .note {
+      margin-top: 28px;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>管理トップ</h1>
+      <p>
+        クリエイター向け管理画面です。プロフィール情報、リンク一覧、
+        アクセス集計をここから確認・編集します。
+      </p>
+    </header>
+
+    <section class="summary-card">
+      <h2 class="summary-title">現在の状態</h2>
+      <p class="summary-text">
+        Phase1 の仮画面です。現時点では見た目のみを実装し、
+        後続で API Gateway / Lambda / DynamoDB と接続していきます。
+      </p>
+    </section>
+
+    <section class="menu-grid">
+      <article class="menu-card">
+        <h2>プロフィール編集</h2>
+        <p>
+          名前、自己紹介、プロフィール画像、肩書きなどを編集します。
+        </p>
+        <a class="menu-link" href="./admin-profile.html">プロフィール編集へ</a>
+      </article>
+
+      <article class="menu-card">
+        <h2>リンク管理</h2>
+        <p>
+          リンクの追加、編集、表示順変更、有効/無効の切り替えを行います。
+        </p>
+        <a class="menu-link" href="./admin-links.html">リンク管理へ</a>
+      </article>
+
+      <article class="menu-card">
+        <h2>アクセス集計</h2>
+        <p>
+          リンク別クリック数、日別クリック数などの集計結果を確認します。
+        </p>
+        <a class="menu-link" href="./admin-analytics.html">アクセス集計へ</a>
+      </article>
+    </section>
+
+    <div class="sub-links">
+      <a href="./index.html">トップへ戻る</a>
+      <a href="./profile.html">公開プロフィールを見る</a>
+      <a href="./login.html">ログイン画面へ戻る</a>
+    </div>
+
+    <p class="note">
+      ※ 本番では認証後のみ表示する想定です。現時点では画面遷移確認用の最小版です。
+    </p>
+  </div>
+</body>
+</html>

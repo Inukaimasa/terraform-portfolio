@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creator Link Hub</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f7f8fa;
+      color: #222;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    .hero {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 48px 32px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 36px;
+    }
+
+    p {
+      margin: 0 0 24px;
+      line-height: 1.7;
+      color: #555;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.2s ease;
+    }
+
+    .button-primary {
+      background: #111827;
+      color: #fff;
+    }
+
+    .button-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .button:hover {
+      opacity: 0.9;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      text-align: left;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .footer {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 14px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <h1>Creator Link Hub</h1>
+      <p>
+        個人クリエイター向けに、SNSや販売リンクを1ページにまとめて見せられる
+        シンプルな導線サービスです。
+      </p>
+      <p>
+        クリック数を記録し、管理画面からリンク別・日別のアクセス状況を確認できます。
+      </p>
+
+      <div class="button-group">
+        <a class="button button-primary" href="./profile.html">サンプルプロフィールを見る</a>
+        <a class="button button-secondary" href="./login.html">ログイン</a>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="card">
+        <h2>プロフィール公開</h2>
+        <p>名前、自己紹介、画像、リンク一覧を1ページに整理して表示します。</p>
+      </div>
+      <div class="card">
+        <h2>リンク管理</h2>
+        <p>管理画面からリンクの追加、並び替え、有効・無効の切り替えができます。</p>
+      </div>
+      <div class="card">
+        <h2>アクセス集計</h2>
+        <p>どのリンクが押されたかを集計し、クリック数を可視化します。</p>
+      </div>
+    </section>
+
+    <div class="footer">
+      Phase1: S3 / CloudFront / API Gateway / Lambda / DynamoDB / Terraform
+    </div>
+  </div>
+</body>
+</html>
