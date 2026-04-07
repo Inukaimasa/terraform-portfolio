@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - "terraform/**"
+      - "backend/**"
+      - "terraform/**"
       - ".github/workflows/terraform-ci.yml"
 
   pull_request:
