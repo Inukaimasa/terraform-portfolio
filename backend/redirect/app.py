@@ -1,80 +1,49 @@
-# このコードは、公開プロフィール画面でリンクが押されたときに、
-# 外部サイトへリダイレクトするための Lambda 関数です。
-#
-# 将来的には frontend/profile.html などのリンクから呼ばれる想定です。
-# 例:
-# <a href="/r/inukai/youtube">YouTube</a>
-#
-# 入力は API Gateway から渡される pathParameters を想定しています。
-# 例:
-# {
-#   "pathParameters": {
-#     "creatorId": "inukai",
-#     "linkId": "youtube"
-#   }
-# }
-#
-# 戻り値の条件は以下です。
-# - 400: creatorId または linkId がない
-# - 404: creatorId / linkId に対応するリンクが見つからない
-# - 302: 対応するリンクが見つかったので外部URLへリダイレクトする
-# - 500: 想定外のサーバーエラー
-#
-# 今は DynamoDB の代わりに、Python の辞書 LINKS を仮データとして使っています。
-# 本番では LINKS の部分を DynamoDB 参照に置き換える想定です。
-#
-# このファイルを python3 app.py で直接実行すると、
-# 一番下の test_event を使ってローカル確認できます。
+# 流れ
+# リクエストから shortCode を取る
+# DynamoDB でリンクを探す
+# 必要なら analytics Lambda を呼ぶ
+# 302 で外部URLへ飛ばす
 
+
+# API Gateway や Lambda が扱いやすい JSON形式 に変換
 import json
-from typing import Any, Dict, Optional
+# ログを出力
+import logging
+# 環境変数を読むため
+import os
+# 現在時刻をUTCで作るため 
+from datetime import datetime, timezone
+# AWSをPythonから操作するための公式SDK
+import boto3
+# AWSアクセス時のエラーを 捕まえるため
+from botocore.exceptions import ClientError
+# loggerオブジェクトを作る
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+dynamodb = boto3.resource("dynamodb")
+lambda_client = boto3.client("lambda")
+# lambdaの環境変数に入力する　キー　LINK_TABLE_NAME　値　link_master　（DynamoDB テーブル名）
+LINK_TABLE_NAME = os.environ["LINK_TABLE_NAME"]
+# lambdaの環境変数に入力する　キー　ANALYTICS_FUNCTION_NAME　値 analytics-lambda
+ANALYTICS_FUNCTION_NAME = os.environ.get("ANALYTICS_FUNCTION_NAME", "")
+
+link_table = dynamodb.Table(LINK_TABLE_NAME)
 
 
-# 仮のリンク定義
-# 後で DynamoDB 参照に置き換える想定
-LINKS: Dict[str, Dict[str, str]] = {
-    "inukai": {
-        "instagram": "https://www.instagram.com/",
-        "x": "https://x.com/",
-        "youtube": "https://www.youtube.com/",
-        "shop": "https://example.com/shop",
-    }
-}
+# JSON形式のレスポンスを返す共通関数で400,404,500の値のメッセージを返す際しよう
 
-
-def build_response(
-    status_code: int,
-    body: Dict[str, Any],
-    headers: Optional[Dict[str, str]] = None,
-) -> Dict[str, Any]:
-    """
-    API Gateway に返すための JSON レスポンスを作る共通関数です。
-
-    例:
-    - 400 入力不足
-    - 404 データなし
-    - 500 サーバーエラー
-    """
-    base_headers = {
-        "Content-Type": "application/json; charset=utf-8",
-    }
-    if headers:
-        base_headers.update(headers)
-
+def json_response(status_code: int, body: dict) -> dict:
     return {
         "statusCode": status_code,
-        "headers": base_headers,
+        "headers": {
+            "Content-Type": "application/json; charset=utf-8",
+        },
         "body": json.dumps(body, ensure_ascii=False),
     }
 
-
-def build_redirect_response(location: str) -> Dict[str, Any]:
-    """
-    外部URLへリダイレクトするためのレスポンスを作る関数です。
-
-    302 と Location ヘッダーを返すことで、
-    ブラウザに「別のURLへ移動してください」と伝えます。
-    """
+# リダイレクト専用のレスポンスを返します。
+def redirect_response(location: str) -> dict:
     return {
         "statusCode": 302,
         "headers": {
@@ -83,111 +52,130 @@ def build_redirect_response(location: str) -> Dict[str, Any]:
         },
         "body": "",
     }
+# リクエストの中から shortCode を取り出す関数です。
+# pathParameters["shortCode"]
+# queryStringParameters["shortCode"]
+# rawPath の最後
+# 見つかれば shortCode
+# なければ None
 
+def get_short_code(event: dict) -> str | None:
+    path_params = event.get("pathParameters") or {}
+    if path_params.get("shortCode"):
+        return path_params["shortCode"]
 
-def get_redirect_url(creator_id: str, link_id: str) -> Optional[str]:
-    """
-    creator_id と link_id を受け取って、
-    対応する外部URLを LINKS から探す関数です。
+    query_params = event.get("queryStringParameters") or {}
+    if query_params.get("shortCode"):
+        return query_params["shortCode"]
 
-    戻り値:
-    - URL が見つかれば文字列を返す
-    - 見つからなければ None を返す
-    """
-    creator_links = LINKS.get(creator_id)
-    if not creator_links:
-        return None
+    raw_path = event.get("rawPath", "")
+    if raw_path:
+        parts = [p for p in raw_path.split("/") if p]
+        if parts:
+            return parts[-1]
 
-    return creator_links.get(link_id)
+    return None
+# リクエストヘッダーを安全に取る関数
+# analytics に送るときに使用
+def get_header(event: dict, name: str) -> str | None:
+    headers = event.get("headers") or {}
+    return headers.get(name) or headers.get(name.lower()) or headers.get(name.title())
 
+# アクセス元IPを取り出す関数
+# API Gateway の event に入っている
+# requestContext["http"]["sourceIp"]
+# requestContext["identity"]["sourceIp"]
+# analytics に渡す。
+def get_source_ip(event: dict) -> str | None:
+    request_context = event.get("requestContext") or {}
 
-def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    """
-    Lambda の本体です。
+    http_info = request_context.get("http") or {}
+    if http_info.get("sourceIp"):
+        return http_info["sourceIp"]
 
-    想定ルート:
-      GET /r/{creatorId}/{linkId}
+    identity = request_context.get("identity") or {}
+    if identity.get("sourceIp"):
+        return identity["sourceIp"]
 
-    想定イベント:
-    {
-      "pathParameters": {
-        "creatorId": "inukai",
-        "linkId": "youtube"
-      }
+    return None
+# analytics Lambda を非同期で呼ぶ関数です。
+
+def invoke_analytics_async(item: dict, event: dict, short_code: str) -> None:
+    if not ANALYTICS_FUNCTION_NAME:
+        logger.info("ANALYTICS_FUNCTION_NAME is not set. Skip analytics invoke.")
+        return
+# analytics Lambda に渡すデータを作っている
+# どの shortCode か
+# creator_id
+# link_id
+# いつアクセスされたか
+# user-agent
+# referer
+# source IP
+    payload = {
+        "source": "redirect.lambda",
+        "short_code": short_code,
+        "creator_id": item.get("creator_id"),
+        "link_id": item.get("link_id"),
+        "accessed_at": datetime.now(timezone.utc).isoformat(),
+        "user_agent": get_header(event, "User-Agent"),
+        "referer": get_header(event, "Referer"),
+        "source_ip": get_source_ip(event),
     }
-    """
+ # analytics Lambda を呼び出す処理
+ # 呼び出す先の Lambda 関数名
+ # 環境変数 ANALYTICS_FUNCTION_NAME に入っている値を使う
+  # analytics Lambda に渡すデータ
+ # payload は Python の dict なので、
+ # JSON文字列に変換してから bytes にして渡す
     try:
-        # 1. pathParameters を受け取る
-        path_parameters = event.get("pathParameters") or {}
-
-        # 2. creatorId と linkId を取り出す
-        creator_id = path_parameters.get("creatorId")
-        link_id = path_parameters.get("linkId")
-
-        # 3. creatorId または linkId がなければ 400 を返す
-        if not creator_id or not link_id:
-            return build_response(
-                400,
-                {
-                    "message": "creatorId と linkId が必要です。"
-                },
-            )
-
-        # 4. creatorId と linkId に対応する URL を探す
-        redirect_url = get_redirect_url(creator_id, link_id)
-
-        # 5. URL が見つからなければ 404 を返す
-        if not redirect_url:
-            return build_response(
-                404,
-                {
-                    "message": "対象リンクが見つかりませんでした。",
-                    "creatorId": creator_id,
-                    "linkId": link_id,
-                },
-            )
-
-        # 6. 本来はここでクリック数を記録する
-        # 例:
-        # save_click_event(creator_id, link_id)
-
-        # 7. URL が見つかったので 302 で外部サイトへリダイレクトする
-        return build_redirect_response(redirect_url)
-
-    except Exception as e:
-        # 想定外のエラーが起きた場合は 500 を返す
-        return build_response(
-            500,
-            {
-                "message": "サーバーエラーが発生しました。",
-                "error": str(e),
-            },
+        lambda_client.invoke(
+            FunctionName=ANALYTICS_FUNCTION_NAME,
+            InvocationType="Event",  # 非同期
+            Payload=json.dumps(payload).encode("utf-8"),
         )
+    except Exception:
+        logger.exception("Failed to invoke analytics lambda.")
 
+# スタート地点　API Gateway からリクエストが来ると、AWS がこの関数を呼びます
+def lambda_handler(event, context):
+    # CloudWatch Logsにログを出すため
+    logger.info("event=%s", json.dumps(event, ensure_ascii=False))
+  # リクエストの中から short_code を取り出す
+    short_code = get_short_code(event)
+ # short_code が取れなかったら入力不足なので 400 を返す
+    if not short_code:
+        return json_response(400, {"message": "shortCode is required"})
 
-if __name__ == "__main__":
-    # ローカル確認用のテストデータです。
-    # 本番では API Gateway から event が渡されます。
-
-    test_event = {
-        "pathParameters": {
-            "creatorId": "inukai",
-            # 302 の確認
-            "linkId": "youtube",
-            # 404 の確認をしたいときは上をコメントアウトして下を使う
-            # "linkId": "unknown",
-        }
-    }
-
-    # 400 の確認をしたいときは creatorId または linkId を消す
-    # test_event = {
-    #     "pathParameters": {
-    #         "creatorId": "inukai"
-    #     }
-    # }
-
-    result = lambda_handler(test_event, None)
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-
-    # python3 app.py を実行すると、ローカルで Lambda 関数の動作を確認できます。
-    # 返ってくる結果は JSON 形式で表示されます。
+    try:
+        # 前提:
+        # link_master テーブルは partition key = short_code
+          # DynamoDB の link_master テーブルから
+        # short_code をキーにして 1件取得する
+        response = link_table.get_item(
+            Key={"short_code": short_code}
+        )
+            # 取得結果の中から Item を取り出す
+        # 見つからなければ item は None になる
+        item = response.get("Item")
+    # DynamoDB 読み取りで問題が起きた時に、
+    except ClientError:
+        logger.exception("Failed to get link item from DynamoDB.")
+        return json_response(500, {"message": "Failed to read link data"})
+  # 該当データがなければ 404
+    if not item:
+        return json_response(404, {"message": "Link not found"})
+      # リンクはあるが無効化されている場合は 403
+    if not item.get("is_active", True):
+        return json_response(403, {"message": "Link is inactive"})
+   # 遷移先URLを取得
+    target_url = item.get("target_url")
+    if not target_url:
+  # データはあるが URL が入っていなければ 500
+        return json_response(500, {"message": "target_url is missing"})
+ # analytics Lambda を非同期で呼ぶ
+    # アクセス記録用
+    invoke_analytics_async(item, event, short_code)
+  # 最後に 302 リダイレクトを返す
+    # ブラウザは target_url に移動する
+    return redirect_response(target_url)

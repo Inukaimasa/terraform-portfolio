@@ -12,6 +12,10 @@
 # Lambda 用 Role が1つある
 # basic execution 相当の権限がついている
 
+# aws_iam_role は Lambda が使うロールを作る
+# aws_iam_role_policy_attachment は そのロールに権限を付ける
+# assume_role_policy は 誰がそのロールを使えるかを決める
+
 resource "aws_iam_role" "lambda_exec_role" {
   name = "lambda-exec-role"
 

@@ -12,3 +12,11 @@ terraform/*_override.tf.json
 # tfvars
 terraform/*.tfvars
 terraform/*.tfvars.json
+
+
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
