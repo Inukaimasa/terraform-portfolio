@@ -66,7 +66,7 @@ resource "aws_iam_role_policy" "lambda_app_custom" {
         "dynamodb:GetItem"
       ]
       # redirect Lambda が link_master からshort_code のリンク先を読むためです。dynamodb:GetItem
-      Resource = aws_dynamodb_table.link_master.arn
+      Resource = aws_dynamodb_table.creators_links.arn
       },
       {
         # dynamodb:UpdateItem, dynamodb:Query

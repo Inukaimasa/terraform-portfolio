@@ -8,7 +8,7 @@
 # aws_iam_role.analytics_lambda_exec
 
 
-# これで参照しているものは、別ファイルで定義済か確認する。
+# lambda.tf や iam.tf参照しているものは、参照した名前と同じ resource が必要です。
 #  local.name_prefix
 #  aws_iam_role.redirect_lambda_exec
 #  aws_iam_role.analytics_lambda_exec
@@ -21,4 +21,102 @@
 # grep -R 'analytics_lambda_exec' terraform
 # grep -R 'link_master' terraform
 # grep -R 'access_summary' terraform
+
+# 1. Lambdaの中身を zip 化
+# backend/redirect,backend/analyticsを zip にして、Lambda に渡せる形にします。
+
+# 関数名.実行ロール,runtime (python3.13),handler (app.lambda_handler),timeout.memory_size.環境変数
+
+# redirect と analytics の Lambda 関数を作って、コード・ロール・環境変数・ログ設定をひもづけるファイルです。
+
+############################################
+# Lambda package (zip)
+############################################
+
+data "archive_file" "redirect_lambda_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend_redirect"
+  output_path = "${path.module}/redirect_lambda.zip"
+}
+data "archive_file" "analytics_lambda_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend_analytics"
+  output_path = "${path.module}/analytics_lambda.zip"
+
+}
+############################################
+# CloudWatch Logs
+############################################
+resource "aws_cloudwatch_log_group" "redirect" {
+  name             = "/aws/lambda/${local.name_prefix}-analytics"
+  retention_in_day = 14
+
+  tags = {
+    Name = "${local.name_prefix}-analytics-log"
+  }
+}
+############################################
+# Lambda functions  analytics
+############################################
+
+# Lambda function
+resource "aws_lambda_function" "analytics" {
+  function_name = "${local.name_prefix}-analytics"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  filename         = data.archive_file.analytics_lambda_zip.output_path
+  source_code_hash = data.archive_file.analytics_lambda_zip.output_base64sha256
+
+  runtime     = "python3.13"
+  handler     = "app.lambda_handler"
+  timeout     = 10
+  memory_size = 128
+
+  environment {
+    variables = {
+      ACCESS_SUMMARY_TABLE_NAME = aws_dynamodb_table.access_summary.name
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.analytics
+  ]
+
+  tags = {
+    Name = "${local.name_prefix}-analytics"
+  }
+}
+
+############################################
+# Lambda functions  redirect
+############################################
+
+# Lambda function
+resource "aws_lambda_function" "redirect" {
+  function_name = "${local.name_prefix}-redirect"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  filename         = data.archive_file.redirect_lambda_zip.output_path
+  source_code_hash = data.archive_file.redirect_lambda_zip.output_base64sha256
+
+  runtime     = "python3.13"
+  handler     = "app.lambda_handler"
+  timeout     = 10
+  memory_size = 128
+
+  environment {
+    variables = {
+      LINK_TABLE_NAME         = aws_dynamodb_table.creators_links.name
+      ANALYTICS_FUNCTION_NAME = aws_lambda_function.analytics.function_name
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.redirect
+  ]
+
+  tags = {
+    Name = "${local.name_prefix}-redirect"
+  }
+}
 
