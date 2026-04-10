@@ -35,12 +35,12 @@
 
 data "archive_file" "redirect_lambda_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/../backend_redirect"
+  source_dir  = "${path.module}/../backend/redirect"
   output_path = "${path.module}/redirect_lambda.zip"
 }
 data "archive_file" "analytics_lambda_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/../backend_analytics"
+  source_dir  = "${path.module}/../backend/analytics"
   output_path = "${path.module}/analytics_lambda.zip"
 
 }
@@ -48,8 +48,16 @@ data "archive_file" "analytics_lambda_zip" {
 # CloudWatch Logs
 ############################################
 resource "aws_cloudwatch_log_group" "redirect" {
-  name             = "/aws/lambda/${local.name_prefix}-analytics"
-  retention_in_day = 14
+  name              = "/aws/lambda/${local.name_prefix}-redirect"
+  retention_in_days = 14
+
+  tags = {
+    Name = "${local.name_prefix}-redirect-log"
+  }
+}
+resource "aws_cloudwatch_log_group" "analytics" {
+  name              = "/aws/lambda/${local.name_prefix}-analytics"
+  retention_in_days = 14
 
   tags = {
     Name = "${local.name_prefix}-analytics-log"
@@ -106,7 +114,8 @@ resource "aws_lambda_function" "redirect" {
 
   environment {
     variables = {
-      LINK_TABLE_NAME         = aws_dynamodb_table.creators_links.name
+      #   LINK_TABLE_NAME         = aws_dynamodb_table.creators_links.name
+      LINK_TABLE_NAME         = aws_dynamodb_table.link_master.name
       ANALYTICS_FUNCTION_NAME = aws_lambda_function.analytics.function_name
     }
   }

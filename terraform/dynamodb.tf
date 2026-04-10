@@ -66,4 +66,17 @@ resource "aws_dynamodb_table" "access_summary" {
   }
 }
 
+resource "aws_dynamodb_table" "link_master" {
+  name         = "${local.name_prefix}-link-master"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "short_code"
 
+  attribute {
+    name = "short_code"
+    type = "S"
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-link-master"
+  }
+}
