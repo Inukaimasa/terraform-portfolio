@@ -124,9 +124,9 @@ resource "aws_lambda_function" "redirect" {
   timeout     = 10
   memory_size = 128
 
-# 環境変数
-# LINK_TABLE_NAME redirect Lambda が読む DynamoDB テーブル名です
-# ANALYTICS_FUNCTION_NAME redirect Lambda から呼び出す analytics Lambda の関数名です  
+  # 環境変数
+  # LINK_TABLE_NAME redirect Lambda が読む DynamoDB テーブル名です
+  # ANALYTICS_FUNCTION_NAME redirect Lambda から呼び出す analytics Lambda の関数名です  
   environment {
     variables = {
       #   LINK_TABLE_NAME         = aws_dynamodb_table.creators_links.name
