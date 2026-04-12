@@ -13,10 +13,18 @@ terraform/*_override.tf.json
 terraform/*.tfvars
 terraform/*.tfvars.json
 
-
+# Python
 .venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .env
+
+# Lambda zip / build artifacts
+build/
+*.zip
+
+# Editor / OS
+.vscode/
+.DS_Store
