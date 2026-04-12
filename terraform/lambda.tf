@@ -32,12 +32,24 @@
 ############################################
 # Lambda package (zip)
 ############################################
+# data は「何かを読む・生成するための定義」です
+# ここでは Lambdaコードをzip化するための準備 をしています
+# "redirect_lambda_zip" は Terraform 内での名前です
+
+# type "zip" は zip 化することを指定しています  
+# backend/redirect/ の中身が zip 化されて、output_path で指定した場所に保存されます。
+# path.module は「いまの Terraform モジュールの場所」
+# つまり terraform/build/redirect.zip みたいな場所に zip ができます
+
+
 
 data "archive_file" "redirect_lambda_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../backend/redirect"
   output_path = "${path.module}/redirect_lambda.zip"
 }
+
+
 data "archive_file" "analytics_lambda_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../backend/analytics"
@@ -112,6 +124,9 @@ resource "aws_lambda_function" "redirect" {
   timeout     = 10
   memory_size = 128
 
+# 環境変数
+# LINK_TABLE_NAME redirect Lambda が読む DynamoDB テーブル名です
+# ANALYTICS_FUNCTION_NAME redirect Lambda から呼び出す analytics Lambda の関数名です  
   environment {
     variables = {
       #   LINK_TABLE_NAME         = aws_dynamodb_table.creators_links.name
