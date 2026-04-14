@@ -56,9 +56,17 @@ data "archive_file" "analytics_lambda_zip" {
   output_path = "${path.module}/analytics_lambda.zip"
 
 }
+# analytics_read 用の Lambda ソースを zip 化
+data "archive_file" "analytics_read_lambda_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend/analytics_read"
+  output_path = "${path.module}/analytics_read_lambda.zip"
+
+}
 ############################################
 # CloudWatch Logs
 ############################################
+# redirect
 resource "aws_cloudwatch_log_group" "redirect" {
   name              = "/aws/lambda/${local.name_prefix}-redirect"
   retention_in_days = 14
@@ -67,6 +75,8 @@ resource "aws_cloudwatch_log_group" "redirect" {
     Name = "${local.name_prefix}-redirect-log"
   }
 }
+
+# analytics
 resource "aws_cloudwatch_log_group" "analytics" {
   name              = "/aws/lambda/${local.name_prefix}-analytics"
   retention_in_days = 14
@@ -75,6 +85,21 @@ resource "aws_cloudwatch_log_group" "analytics" {
     Name = "${local.name_prefix}-analytics-log"
   }
 }
+
+# analytics_read
+
+resource "aws_cloudwatch_log_group" "analytics_read" {
+  name              = "/aws/lambda/${local.name_prefix}-analytics-read"
+  retention_in_days = 14
+
+  tags = {
+    Name = "${local.name_prefix}-analytics-read-log"
+  }
+}
+
+
+
+
 ############################################
 # Lambda functions  analytics
 ############################################
@@ -104,6 +129,37 @@ resource "aws_lambda_function" "analytics" {
 
   tags = {
     Name = "${local.name_prefix}-analytics"
+  }
+}
+
+############################################
+# Lambda functions  analytics read　shortCode の全日分を合計して返す　lambda 関数
+############################################
+
+resource "aws_lambda_function" "analytics_read" {
+  function_name = "${local.name_prefix}-analytics-read"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  filename         = data.archive_file.analytics_read_lambda_zip.output_path
+  source_code_hash = data.archive_file.analytics_read_lambda_zip.output_base64sha256
+
+  runtime     = "python3.13"
+  handler     = "app.lambda_handler"
+  timeout     = 10
+  memory_size = 128
+
+  environment {
+    variables = {
+      ACCESS_SUMMARY_TABLE_NAME = aws_dynamodb_table.access_summary.name
+    }
+  }
+  # cloiudwatchのロググループは aws_cloudwatch_log_group.analytics_read 
+  depends_on = [
+    aws_cloudwatch_log_group.analytics_read
+  ]
+
+  tags = {
+    Name = "${local.name_prefix}-analytics-read"
   }
 }
 

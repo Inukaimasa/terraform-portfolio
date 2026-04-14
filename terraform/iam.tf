@@ -2,6 +2,10 @@
 
 # Lambda が動くための権限を作る。
 
+# app.py = 実際の処理を書く場所
+# lambda.tf = その処理を Lambda として AWS に登録する場所
+# iam.tf = その Lambda に何をしてよいか権限を与える場所
+
 # ■今回やること
 # Lambda 実行用 Role
 # CloudWatch Logs に書ける Policy
@@ -52,6 +56,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
+
 #Lambdaアプリ用追加権限
 resource "aws_iam_role_policy" "lambda_app_custom" {
   name = "lambda-app-custom"

@@ -154,6 +154,59 @@
     }
   </style>
 </head>
+
+<script>
+  const analyticsApiUrl =
+    "https://ko7x8t74kg.execute-api.ap-northeast-1.amazonaws.com/analytics/abc123";
+
+  async function loadAnalytics() {
+    const accessCountEl = document.getElementById("accessCount");
+
+    try {
+      const response = await fetch(analyticsApiUrl);
+
+      if (!response.ok) {
+        accessCountEl.textContent = "取得失敗";
+        return;
+      }
+
+      const data = await response.json();
+      accessCountEl.textContent = data.access_count ?? "--";
+    } catch (error) {
+      accessCountEl.textContent = "取得失敗";
+      console.error("analytics fetch error:", error);
+    }
+  }
+
+  loadAnalytics();
+</script><script>
+  const analyticsApiUrl =
+    "https://ko7x8t74kg.execute-api.ap-northeast-1.amazonaws.com/analytics/abc123";
+
+  async function loadAnalytics() {
+    const accessCountEl = document.getElementById("accessCount");
+
+    try {
+      const response = await fetch(analyticsApiUrl);
+
+      if (!response.ok) {
+        accessCountEl.textContent = "取得失敗";
+        return;
+      }
+
+      const data = await response.json();
+      accessCountEl.textContent = data.access_count ?? "--";
+    } catch (error) {
+      accessCountEl.textContent = "取得失敗";
+      console.error("analytics fetch error:", error);
+    }
+  }
+
+  loadAnalytics();
+</script>
+
+
+
 <body>
   <div class="container">
     <div class="card">
