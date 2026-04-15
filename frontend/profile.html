@@ -155,55 +155,6 @@
   </style>
 </head>
 
-<script>
-  const analyticsApiUrl =
-    "https://ko7x8t74kg.execute-api.ap-northeast-1.amazonaws.com/analytics/abc123";
-
-  async function loadAnalytics() {
-    const accessCountEl = document.getElementById("accessCount");
-
-    try {
-      const response = await fetch(analyticsApiUrl);
-
-      if (!response.ok) {
-        accessCountEl.textContent = "取得失敗";
-        return;
-      }
-
-      const data = await response.json();
-      accessCountEl.textContent = data.access_count ?? "--";
-    } catch (error) {
-      accessCountEl.textContent = "取得失敗";
-      console.error("analytics fetch error:", error);
-    }
-  }
-
-  loadAnalytics();
-</script><script>
-  const analyticsApiUrl =
-    "https://ko7x8t74kg.execute-api.ap-northeast-1.amazonaws.com/analytics/abc123";
-
-  async function loadAnalytics() {
-    const accessCountEl = document.getElementById("accessCount");
-
-    try {
-      const response = await fetch(analyticsApiUrl);
-
-      if (!response.ok) {
-        accessCountEl.textContent = "取得失敗";
-        return;
-      }
-
-      const data = await response.json();
-      accessCountEl.textContent = data.access_count ?? "--";
-    } catch (error) {
-      accessCountEl.textContent = "取得失敗";
-      console.error("analytics fetch error:", error);
-    }
-  }
-
-  loadAnalytics();
-</script>
 
 
 
@@ -260,5 +211,44 @@
       </div>
     </div>
   </div>
+  <script>
+  // どの API を呼ぶか を決める。今回は analytics API の URL を指定。
+  const analyticsApiUrl =
+    "https://ko7x8t74kg.execute-api.ap-northeast-1.amazonaws.com/analytics/abc123";
+  //  HTML側のＨＴＭＬを参照
+
+  async function loadAnalytics() {
+    const accessCountEl = document.getElementById("accessCount");
+    accessCountEl.textContent = "読み込み中...";
+
+    try {
+      const response = await fetch(analyticsApiUrl);
+      
+      if (response.status === 404) {
+        accessCountEl.textContent = "データなし";
+        return;
+      }
+
+      if (!response.ok) {
+        accessCountEl.textContent = "取得失敗";
+        return;
+      }
+        // レスポンス本文(JSON)をJavaScriptのオブジェクトに変換
+      const data = await response.json();
+      // access_count を画面に表示
+      // access_count が無い場合は "--" を表示
+      accessCountEl.textContent = data.access_count ?? "--";
+    } catch (error) {
+      // fetch 自体が失敗した場合にここへ入る
+      // 例: ネットワーク断、CORSエラー、URL誤りなど
+      accessCountEl.textContent = "取得失敗";
+      console.error("analytics fetch error:", error);
+    }
+  }
+  // ページを開いた時に実行する HTML の中に <script> があれば、その場所に来た時に実行される
+   loadAnalytics();
+
+
+</script>
 </body>
 </html>

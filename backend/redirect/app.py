@@ -135,7 +135,7 @@ def invoke_analytics_async(item: dict, event: dict, short_code: str) -> None:
             Payload=json.dumps(payload).encode("utf-8"),
         )
     except Exception:
-        logger.exception("Failed to invoke analytics lambda.")
+        logger.exception("Failed to invoke analytics lambda. short_code=%s", short_code)
 
 # スタート地点　API Gateway からリクエストが来ると、AWS がこの関数を呼びます
 def lambda_handler(event, context):
@@ -163,19 +163,36 @@ def lambda_handler(event, context):
         logger.exception("Failed to get link item from DynamoDB.")
         return json_response(500, {"message": "Failed to read link data"})
   # 該当データがなければ 404
+#   CloudWatch やAPIレスポンスで何が見つからなかったかわかりやすくするために、short_code も返す
     if not item:
-        return json_response(404, {"message": "Link not found"})
+        logger.warning("Link not found for short_code=%s", short_code)
+        return json_response(404,        
+         {
+            "message": "Link not found",
+            "short_code": short_code
+            })
       # リンクはあるが無効化されている場合は 403
     if not item.get("is_active", True):
-        return json_response(403, {"message": "Link is inactive"})
+        logger.info("Link is inactive for short_code=%s", short_code)
+        return json_response(403, 
+        {"message": "Link is inactive" , "short_code": short_code})
+   
+   #「システムエラー」と見るより、リンク先データ不足
    # 遷移先URLを取得
     target_url = item.get("target_url")
     if not target_url:
-  # データはあるが URL が入っていなければ 500
-        return json_response(500, {"message": "target_url is missing"})
+        logger.warning("target_url is missing for short_code=%s", short_code)        
+  # データはあるが URL が入っていなければ 404
+        return json_response(
+            404, {
+                "message": "target_url is missing",
+                "short_code": short_code})
  # analytics Lambda を非同期で呼ぶ
-    # アクセス記録用
+    # アクセス記録用 Lambda を呼ぶ
     invoke_analytics_async(item, event, short_code)
+    # 正常にどこへ飛ばしたかを CloudWatch Logs に残す
+    logger.info("Redirecting to %s for short_code=%s", target_url, short_code)
+    
   # 最後に 302 リダイレクトを返す
     # ブラウザは target_url に移動する
     return redirect_response(target_url)
