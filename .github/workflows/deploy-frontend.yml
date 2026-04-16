@@ -1,0 +1,59 @@
+# GitHub Actions の画面に出る名前
+name: Deploy Frontend
+
+# いつ動かすか
+on:
+  push:
+    # main ブランチに push された時だけ動かす
+    branches:
+      - main
+
+    # frontend 配下か、この workflow 自体が変わった時だけ動かす
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+
+jobs:
+  deploy:
+    # job の表示名
+    name: Deploy frontend to S3 and invalidate CloudFront
+
+    # Ubuntu 環境で実行
+    runs-on: ubuntu-latest
+
+    # AWS OIDC を使うための権限
+    # id-token: write → AWS ロールを引き受けるために必要
+    # contents: read  → リポジトリを checkout するために必要
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # リポジトリの中身を runner に持ってくる
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # GitHub Actions から AWS に入る
+      # OIDC で AWS の IAM ロールを引き受ける
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+          # 利用する AWS リージョン
+          aws-region: ap-northeast-1
+
+          # AWS 側で作った GitHub Actions 用 IAM ロール ARNを確認して入れる
+          
+          role-to-assume: arn:aws:iam::601489228355:role/github-actions-deploy-frontend-policy
+
+      # frontend/ の中身を S3 バケットへ同期する
+      # --delete は、S3 側だけに残っている古いファイルを削除する
+      - name: Deploy frontend to S3
+        run: |
+          aws s3 sync frontend/ s3://my-portfolio-dev-20260411225011509500000001/ --delete
+
+      # CloudFront のキャッシュを削除して、新しいファイルを反映させる
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id E216GR4AS96XG0 \
+            --paths "/*"
