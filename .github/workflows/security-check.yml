@@ -16,7 +16,7 @@ on:
       - main
     paths:
       - "terraform/**"
-      - ".github/workflows/security-check.yml"  
+      - ".github/workflows/security-check.yml"
 
 jobs:
   checkov:
@@ -31,7 +31,7 @@ jobs:
         uses: actions/setup-python@v4
 
       - name: Run Checkov
-      uses:bridgecrew/checkov-action@master
+        uses: bridgecrewio/checkov-action@master
         with:
           directory: terraform
           framework: terraform
