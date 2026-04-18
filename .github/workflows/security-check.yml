@@ -11,12 +11,12 @@
 name: Security Check
 
 on:
-  push:
+  pull_request:
     branches:
       - main
     paths:
       - "terraform/**"
-      - ".github/workflows/security-check.yml"
+      - ".github/workflows/security-check.yml"  
 
 jobs:
   checkov:
@@ -33,5 +33,5 @@ jobs:
       - name: Run Checkov
       uses:bridgecrew/checkov-action@master
         with:
-          directory: terraform/
+          directory: terraform
           framework: terraform
