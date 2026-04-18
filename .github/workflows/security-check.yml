@@ -7,3 +7,31 @@
 # 2. Terraform の state を S3 backend に移す
 # 3. module を 1つ切り出す
 # 4. dev / prod を分ける
+
+name: Security Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "terraform/**"
+      - ".github/workflows/security-check.yml"
+
+jobs:
+  checkov:
+    name: Checkov Security Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+
+      - name: Run Checkov
+      uses:bridgecrew/checkov-action@master
+        with:
+          directory: terraform/
+          framework: terraform
