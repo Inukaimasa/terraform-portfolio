@@ -1,0 +1,9 @@
+# 1. Push Protection を有効化
+# 2. security-check.yml を追加
+# 3. Checkov を回す
+
+# やる順番
+# 1. Security チェックを CI に追加
+# 2. Terraform の state を S3 backend に移す
+# 3. module を 1つ切り出す
+# 4. dev / prod を分ける
