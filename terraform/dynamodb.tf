@@ -22,7 +22,8 @@
 
 #  aws_dynamodb_table は DynamoDB テーブルそのものを作る リソース名は creators_links テーブル名も creators-links
 # DynamoDB の複合主キーは、partition key と sort key の組み合わせです
-
+#checkov:skip=CKV_AWS_119:Customer managed KMS for DynamoDB is deferred in this portfolio phase.
+#checkov:skip=CKV_AWS_28:PITR is deferred in this portfolio phase due to cost considerations for non-production tables.
 resource "aws_dynamodb_table" "creators_links" {
   name         = "creators-links"
   billing_mode = "PAY_PER_REQUEST"
@@ -39,12 +40,20 @@ resource "aws_dynamodb_table" "creators_links" {
     type = "S"
   }
 
+  #新規追加　運用始まってから有効にする。
+  # point_in_time_recovery {
+  #   enabled = true
+  #   } 
+
   tags = {
     Name = "creators-links"
   }
 }
-# access-summaryテーブルも同様に定義します。
 
+
+# access-summaryテーブルも同様に定義します。
+#checkov:skip=CKV_AWS_119:Customer managed KMS for DynamoDB is deferred in this portfolio phase.
+#checkov:skip=CKV_AWS_28:PITR is deferred in this portfolio phase due to cost considerations for non-production tables.
 resource "aws_dynamodb_table" "access_summary" {
   name         = "access-summary"
   billing_mode = "PAY_PER_REQUEST"
@@ -61,10 +70,17 @@ resource "aws_dynamodb_table" "access_summary" {
     type = "S"
   }
 
+  #新規追加　運用始まってから有効にする。
+  # point_in_time_recovery {
+  #   enabled = true
+  #   }
   tags = {
     Name = "access-summary"
   }
 }
+
+#checkov:skip=CKV_AWS_119:Customer managed KMS for DynamoDB is deferred in this portfolio phase.
+#checkov:skip=CKV_AWS_28:PITR is deferred in this portfolio phase due to cost considerations for non-production tables.
 
 resource "aws_dynamodb_table" "link_master" {
   name         = "${local.name_prefix}-link-master"
@@ -75,7 +91,10 @@ resource "aws_dynamodb_table" "link_master" {
     name = "short_code"
     type = "S"
   }
-
+  #新規追加
+  #  point_in_time_recovery {
+  #   enabled = true
+  # }
   tags = {
     Name = "${local.name_prefix}-link-master"
   }
