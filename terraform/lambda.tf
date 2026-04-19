@@ -42,6 +42,9 @@
 # つまり terraform/build/redirect.zip みたいな場所に zip ができます
 
 
+############################################
+# Lambda package (zip)
+############################################
 
 data "archive_file" "redirect_lambda_zip" {
   type        = "zip"
@@ -49,33 +52,29 @@ data "archive_file" "redirect_lambda_zip" {
   output_path = "${path.module}/redirect_lambda.zip"
 }
 
-
 data "archive_file" "analytics_lambda_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../backend/analytics"
   output_path = "${path.module}/analytics_lambda.zip"
-
 }
-# analytics_read 用の Lambda ソースを zip 化
+
 data "archive_file" "analytics_read_lambda_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../backend/analytics_read"
   output_path = "${path.module}/analytics_read_lambda.zip"
-
 }
+
 ############################################
 # CloudWatch Logs
 ############################################
 
-
 # redirect
-#checkov:skip=CKV_AWS_158:Customer-managed KMS for CloudWatch Logs is deferred for this non-production portfolio environment.
 #checkov:skip=CKV_AWS_338:One-year log retention is deferred for this non-production portfolio environment.
+#checkov:skip=CKV_AWS_158:Customer-managed KMS for CloudWatch Logs is deferred for this non-production portfolio environment.
 resource "aws_cloudwatch_log_group" "redirect" {
-  name = "/aws/lambda/${local.name_prefix}-redirect"
-  # 本番運用開始後は retention_in_days を設定して、ログの保存期間を365にする
+  name              = "/aws/lambda/${local.name_prefix}-redirect"
   retention_in_days = 7
-  #  etention_in_days = 365
+
   tags = {
     Name = "${local.name_prefix}-redirect-log"
   }
@@ -84,13 +83,10 @@ resource "aws_cloudwatch_log_group" "redirect" {
 # analytics
 #checkov:skip=CKV_AWS_338:One-year log retention is deferred for this non-production portfolio environment.
 #checkov:skip=CKV_AWS_158:Customer-managed KMS for CloudWatch Logs is deferred for this non-production portfolio environment.
-
-
 resource "aws_cloudwatch_log_group" "analytics" {
-  name = "/aws/lambda/${local.name_prefix}-analytics"
-  # 本番運用開始後は retention_in_days を設定して、ログの保存期間を365にする
+  name              = "/aws/lambda/${local.name_prefix}-analytics"
   retention_in_days = 7
-  #  etention_in_days = 365
+
   tags = {
     Name = "${local.name_prefix}-analytics-log"
   }
@@ -99,30 +95,24 @@ resource "aws_cloudwatch_log_group" "analytics" {
 # analytics_read
 #checkov:skip=CKV_AWS_338:One-year log retention is deferred for this non-production portfolio environment.
 #checkov:skip=CKV_AWS_158:Customer-managed KMS for CloudWatch Logs is deferred for this non-production portfolio environment.
-#checkov:skip=CKV_AWS_115:Reserved concurrency is deferred because this portfolio has low traffic and no downstream resource requiring concurrency protection yet.
 resource "aws_cloudwatch_log_group" "analytics_read" {
-  name = "/aws/lambda/${local.name_prefix}-analytics-read"
-  # 本番運用開始後は retention_in_days を設定して、ログの保存期間を365にする
+  name              = "/aws/lambda/${local.name_prefix}-analytics-read"
   retention_in_days = 7
-  #  etention_in_days = 365
+
   tags = {
     Name = "${local.name_prefix}-analytics-read-log"
   }
 }
 
-
-
-
 ############################################
-# Lambda functions  analytics
+# Lambda functions analytics
 ############################################
 #checkov:skip=CKV_AWS_115:Reserved concurrency is deferred because this portfolio has low traffic and no downstream resource requiring concurrency protection yet.
 #checkov:skip=CKV_AWS_117:This Lambda intentionally runs outside a VPC because it only uses managed AWS services.
 #checkov:skip=CKV_AWS_173:Customer-managed KMS for Lambda environment variables is deferred for this non-production portfolio environment.
 #checkov:skip=CKV_AWS_272:Code signing is deferred because this portfolio currently uses a simple non-production deployment flow.
-#checkov:skip=CKV_AWS_50:X-Ray tracing is deferred because CloudWatch Logs are sufficient for debugging in this non-production portfolio environment.
 #checkov:skip=CKV_AWS_116:DLQ is deferred for this function until asynchronous failure handling is implemented.
-# Lambda function
+#checkov:skip=CKV_AWS_50:X-Ray tracing is deferred because CloudWatch Logs are sufficient for debugging in this non-production portfolio environment.
 resource "aws_lambda_function" "analytics" {
   function_name = "${local.name_prefix}-analytics"
   role          = aws_iam_role.lambda_exec_role.arn
@@ -151,15 +141,14 @@ resource "aws_lambda_function" "analytics" {
 }
 
 ############################################
-# Lambda functions  analytics read　shortCode の全日分を合計して返す　lambda 関数
+# Lambda functions analytics_read
 ############################################
+#checkov:skip=CKV_AWS_115:Reserved concurrency is deferred because this portfolio has low traffic and no downstream resource requiring concurrency protection yet.
 #checkov:skip=CKV_AWS_117:This Lambda intentionally runs outside a VPC because it only uses managed AWS services.
 #checkov:skip=CKV_AWS_173:Customer-managed KMS for Lambda environment variables is deferred for this non-production portfolio environment.
 #checkov:skip=CKV_AWS_272:Code signing is deferred because this portfolio currently uses a simple non-production deployment flow.
 #checkov:skip=CKV_AWS_116:DLQ is deferred for this function because it is not used for asynchronous failure handling in the current portfolio scope.
 #checkov:skip=CKV_AWS_50:X-Ray tracing is deferred because CloudWatch Logs are sufficient for debugging in this non-production portfolio environment.
-
-# 後でanalyticsのDLQの処理の追記をする予定があるため、analytics_read も DLQ 関連の checkov スキップを入れておきます。
 resource "aws_lambda_function" "analytics_read" {
   function_name = "${local.name_prefix}-analytics-read"
   role          = aws_iam_role.lambda_exec_role.arn
@@ -177,7 +166,7 @@ resource "aws_lambda_function" "analytics_read" {
       ACCESS_SUMMARY_TABLE_NAME = aws_dynamodb_table.access_summary.name
     }
   }
-  # cloiudwatchのロググループは aws_cloudwatch_log_group.analytics_read 
+
   depends_on = [
     aws_cloudwatch_log_group.analytics_read
   ]
@@ -188,10 +177,8 @@ resource "aws_lambda_function" "analytics_read" {
 }
 
 ############################################
-# Lambda functions  redirect
+# Lambda functions redirect
 ############################################
-
-# Lambda function
 #checkov:skip=CKV_AWS_116:DLQ is deferred for this function because it is not used for asynchronous failure handling in the current portfolio scope.
 #checkov:skip=CKV_AWS_272:Code signing is deferred because this portfolio currently uses a simple non-production deployment flow.
 #checkov:skip=CKV_AWS_117:This Lambda intentionally runs outside a VPC because it only uses managed AWS services.
@@ -209,12 +196,8 @@ resource "aws_lambda_function" "redirect" {
   timeout     = 10
   memory_size = 128
 
-  # 環境変数
-  # LINK_TABLE_NAME redirect Lambda が読む DynamoDB テーブル名です
-  # ANALYTICS_FUNCTION_NAME redirect Lambda から呼び出す analytics Lambda の関数名です  
   environment {
     variables = {
-      #   LINK_TABLE_NAME         = aws_dynamodb_table.creators_links.name
       LINK_TABLE_NAME         = aws_dynamodb_table.link_master.name
       ANALYTICS_FUNCTION_NAME = aws_lambda_function.analytics.function_name
     }
@@ -228,4 +211,3 @@ resource "aws_lambda_function" "redirect" {
     Name = "${local.name_prefix}-redirect"
   }
 }
-
