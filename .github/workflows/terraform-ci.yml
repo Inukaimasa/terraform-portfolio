@@ -1,3 +1,5 @@
+# CLの設定
+# GitHub Actions の画面に出る名前
 name: Terraform-CI
 
 on:

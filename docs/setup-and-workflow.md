@@ -715,8 +715,16 @@ deactivate
 ```
 
 ---
+## 21.
+yamlファイルの修正
+.yml のインデントやスペースを自動で直す.
+sudo apt install npm
+npx prettier .github/workflows/security-check.yml --write
 
-## 21. 今はやらないこと
+------
+git diffで確認をする
+
+## 22. 今はやらないこと
 
 最初から重くしすぎないため、以下は後回しにする。
 
@@ -731,7 +739,7 @@ deactivate
 
 ---
 
-## 22. 補足 URL 集
+## 23. 補足 URL 集
 
 ### 公式ドキュメント
 - WSL install: https://learn.microsoft.com/ja-jp/windows/wsl/install

@@ -1,4 +1,5 @@
-# GitHub Actions の画面に出る名前
+#CDの設定
+# GitHub Actions の画面に出る名前 
 name: Deploy Frontend
 
 # いつ動かすか
