@@ -90,6 +90,11 @@ Phase 1 では、短縮コードを使ったリダイレクト機能、アクセ
 4. `short_code` / `access_count` / `last_accessed_at` を JSON で返す
 5. フロント側で `access_count` を画面表示する
 
+## Terraform backend
+
+Terraform の state は S3 backend に移行済みです。  
+詳細な作業メモは `docs/implementation-notes.md` を参照してください。
+
 ## 動作確認結果
 以下の動作確認を実施しました。
 
