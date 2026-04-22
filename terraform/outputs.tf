@@ -51,14 +51,17 @@ output "s3_bucket_id" {
 
 # 新規追加
 output "redirect_lambda_function_name" {
-  value = module.redirect_lambda.lambda_name
+  description = "リダイレクト Lambda 関数名"
+  value       = module.redirect_lambda.lambda_name
 }
 
 output "redirect_lambda_function_arn" {
-  value = module.redirect_lambda.lambda_arn
+  description = "リダイレクト Lambda 関数ARN"
+  value       = module.redirect_lambda.lambda_arn
 }
 
 output "redirect_lambda_log_group_name" {
-  value = module.redirect_lambda.log_group_name
+  description = "リダイレクト Lambda Log Group 名"
+  value       = module.redirect_lambda.log_group_name
 }
 
