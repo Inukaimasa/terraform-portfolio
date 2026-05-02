@@ -211,3 +211,87 @@ resource "aws_lambda_function" "redirect" {
     Name = "${local.name_prefix}-redirect"
   }
 }
+
+############################################
+# Lambda package (zip) config_alert
+############################################
+data "archive_file" "config_alert_lambda_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../backend/config_alert"
+  output_path = "${path.module}/config_alert_lambda.zip"
+}
+
+############################################
+# CloudWatch Logs config_alert
+############################################
+#checkov:skip=CKV_AWS_338:One-year log retention is deferred for this non-production portfolio environment.
+#checkov:skip=CKV_AWS_158:Customer-managed KMS for CloudWatch Logs is deferred for this non-production portfolio environment.
+resource "aws_cloudwatch_log_group" "config_alert" {
+  name              = "/aws/lambda/${local.name_prefix}-config-alert"
+  retention_in_days = 7
+
+  tags = {
+    Name = "${local.name_prefix}-config-alert-log"
+  }
+}
+############################################
+# Lambda functions config_alert
+############################################
+#checkov:skip=CKV_AWS_115:Reserved concurrency is deferred because this portfolio has low traffic and no downstream resource requiring concurrency protection yet.
+#checkov:skip=CKV_AWS_117:This Lambda intentionally runs outside a VPC because it only uses managed AWS services.
+#checkov:skip=CKV_AWS_173:Customer-managed KMS for Lambda environment variables is deferred for this non-production portfolio environment.
+#checkov:skip=CKV_AWS_272:Code signing is deferred because this portfolio currently uses a simple non-production deployment flow.
+#checkov:skip=CKV_AWS_116:DLQ is deferred for this function because it is not used for asynchronous failure handling in the current portfolio scope.
+#checkov:skip=CKV_AWS_50:X-Ray tracing is deferred because CloudWatch Logs are sufficient for debugging in this non-production portfolio environment.
+resource "aws_lambda_function" "config_alert" {
+  function_name = "${local.name_prefix}-config-alert"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  filename         = data.archive_file.config_alert_lambda_zip.output_path
+  source_code_hash = data.archive_file.config_alert_lambda_zip.output_base64sha256
+
+  runtime     = "python3.13"
+  handler     = "app.lambda_handler"
+  timeout     = 30
+  memory_size = 128
+
+  environment {
+    variables = {
+      # 環境変数があればここに追加
+      ANTHROPIC_API_KEY = var.anthropic_api_key
+      SLACK_WEBHOOK_URL = var.slack_webhook_url
+    }
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.config_alert
+  ]
+
+  tags = {
+    Name = "${local.name_prefix}-config-alert"
+  }
+}
+############################################
+# SNS Topic（Config → Lambda のトリガー）
+############################################
+resource "aws_sns_topic" "config_alert" {
+  name = "${local.name_prefix}-config-alerts"
+
+  tags = {
+    Name = "${local.name_prefix}-config-alerts"
+  }
+}
+# SNS → Lambda の紐づけ
+resource "aws_sns_topic_subscription" "config_alert_lambda" {
+  topic_arn = aws_sns_topic.config_alert.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.config_alert.arn
+}
+  # Lambda 関数へのアクセス許可を追加
+resource "aws_lambda_permission" "allow_invoke_config_alert"{
+   statement_id  = "AllowSNSInvoke"
+   action        = "lambda:InvokeFunction"
+   function_name = aws_lambda_function.config_alert.function_name
+   principal     = "sns.amazonaws.com"
+   source_arn    = aws_sns_topic.config_alert.arn
+ }

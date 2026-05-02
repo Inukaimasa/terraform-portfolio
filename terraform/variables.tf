@@ -15,3 +15,18 @@ variable "aws_region" {
   type        = string
   default     = "ap-northeast-1"
 }
+
+variable "anthropic_api_key" {
+  type        = string
+  description = "Anthropic API Key for Claude"
+  sensitive   = true
+}
+
+variable "slack_webhook_url" {
+  type        = string
+  description = "Slack Webhook URL for notifications"
+  sensitive   = true
+
+
+
+}
