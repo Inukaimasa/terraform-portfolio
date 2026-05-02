@@ -276,10 +276,6 @@ resource "aws_lambda_function" "config_alert" {
 ############################################
 resource "aws_sns_topic" "config_alert" {
   name = "${local.name_prefix}-config-alerts"
-
-  tags = {
-    Name = "${local.name_prefix}-config-alerts"
-  }
 }
 # SNS → Lambda の紐づけ
 resource "aws_sns_topic_subscription" "config_alert_lambda" {
